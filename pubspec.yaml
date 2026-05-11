@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
 
   # PDF Rendering - PDFium powered, sharp vector rendering
-  pdfrx: ^1.0.0
+  pdfrx: ^2.0.0
 
   # PDF Processing - merge, split, annotate, flatten
   syncfusion_flutter_pdf: ^27.0.0

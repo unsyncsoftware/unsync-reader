@@ -59,6 +59,16 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+           // Close document button
+           if (document != null)
+             IconButton(
+               icon: const Icon(Icons.close),
+               tooltip: 'Close document',
+               onPressed: () {
+                 ref.read(currentDocumentProvider.notifier).state = null;
+                 ref.read(currentPageProvider.notifier).state = 1;
+               },
+          ),
           // Toggle sidebar
           IconButton(
             icon: const Icon(Icons.view_sidebar_outlined),

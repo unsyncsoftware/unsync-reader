@@ -13,11 +13,11 @@ class Toolbar extends ConsumerWidget {
 
     return Container(
       height: 44,
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         children: [
-          // Annotation tools
+          // ─── ANNOTATION TOOLS ─────────────────────────────────────────
           _ToolButton(
             icon: Icons.highlight_outlined,
             tooltip: 'Highlight',
@@ -53,7 +53,7 @@ class Toolbar extends ConsumerWidget {
 
           const VerticalDivider(width: 16, indent: 8, endIndent: 8),
 
-          // Page navigation
+          // ─── PAGE NAVIGATION ──────────────────────────────────────────
           IconButton(
             icon: const Icon(Icons.chevron_left),
             iconSize: 18,
@@ -79,42 +79,58 @@ class Toolbar extends ConsumerWidget {
 
           const Spacer(),
 
-          // Zoom controls
+          // ─── ZOOM OUT BUTTON ──────────────────────────────────────────
           IconButton(
             icon: const Icon(Icons.zoom_out),
             iconSize: 18,
             tooltip: 'Zoom out',
             onPressed: () {
-              final zoom = ref.read(zoomLevelProvider);
-              if (zoom > 0.5) {
-                ref.read(zoomLevelProvider.notifier).state =
-                    (zoom - 0.1).clamp(0.5, 3.0);
+              final controller = ref.read(pdfViewerControllerProvider);
+              if (controller.isReady) {
+                controller.setZoom(
+                  controller.centerPosition,
+                  controller.currentZoom - 0.25,
+                );
               }
             },
           ),
+
+          // ─── ZOOM PERCENTAGE DISPLAY ──────────────────────────────────
           Consumer(builder: (context, ref, _) {
-            final zoom = ref.watch(zoomLevelProvider);
-            return Text(
-              '${(zoom * 100).toStringAsFixed(0)}%',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            final controller = ref.watch(pdfViewerControllerProvider);
+            return ListenableBuilder(
+              listenable: controller,
+              builder: (context, _) {
+                final zoom = controller.isReady
+                    ? controller.currentZoom
+                    : 1.0;
+                return Text(
+                  '${(zoom * 100).toStringAsFixed(0)}%',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                );
+              },
             );
           }),
+
+          // ─── ZOOM IN BUTTON ───────────────────────────────────────────
           IconButton(
             icon: const Icon(Icons.zoom_in),
             iconSize: 18,
             tooltip: 'Zoom in',
             onPressed: () {
-              final zoom = ref.read(zoomLevelProvider);
-              if (zoom < 3.0) {
-                ref.read(zoomLevelProvider.notifier).state =
-                    (zoom + 0.1).clamp(0.5, 3.0);
+              final controller = ref.read(pdfViewerControllerProvider);
+              if (controller.isReady) {
+                controller.setZoom(
+                  controller.centerPosition,
+                  controller.currentZoom + 0.25,
+                );
               }
             },
           ),
 
           const VerticalDivider(width: 16, indent: 8, endIndent: 8),
 
-          // Save button
+          // ─── SAVE BUTTON ──────────────────────────────────────────────
           TextButton.icon(
             icon: const Icon(Icons.save_outlined, size: 16),
             label: const Text('Save'),

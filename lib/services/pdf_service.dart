@@ -6,6 +6,8 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
 import '../models/pdf_document.dart';
 import '../providers/pdf_provider.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
+import 'package:pdfrx/pdfrx.dart';
 
 class PdfService {
 
@@ -137,10 +139,54 @@ class PdfService {
     await openFilePath(ref, savePath);
   }
 
+  // ─── PDF TO IMAGES ────────────────────────────────────────────────────────
   static Future<void> pdfToImages(WidgetRef ref) async {
-    // TODO: implement via pdfrx rasterization
-  }
+    final document = ref.read(currentDocumentProvider);
+    if (document == null) return;
 
+    // ─── PICK OUTPUT FOLDER ──────────────────────────────────────────
+    final outputDir = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Choose output folder for images',
+    );
+    if (outputDir == null) return;
+
+    final bytes = File(document.path).readAsBytesSync();
+    final doc = sfpdf.PdfDocument(inputBytes: bytes);
+    final pageCount = doc.pages.count;
+    doc.dispose();
+
+    // ─── OPEN PDF WITH PDFRX AND RENDER EACH PAGE ───────────────────
+    final pdfDoc = await PdfDocument.openFile(document.path);
+
+    for (int i = 0; i < pageCount; i++) {
+      final page = await pdfDoc.pages[i].render(
+        // ─── RENDER AT 150 DPI — GOOD QUALITY WITHOUT HUGE FILES ────
+        fullWidth: pdfDoc.pages[i].width * 2,
+        fullHeight: pdfDoc.pages[i].height * 2,
+      );
+
+      if (page == null) continue;
+
+      final image = await page.createImage();
+      final imageBytes = await image.toByteData(
+          format: ui.ImageByteFormat.png);
+
+      if (imageBytes == null) continue;
+
+      final outputPath = p.join(
+        outputDir,
+        '${p.basenameWithoutExtension(document.name)}_page_${i + 1}.png',
+      );
+
+      await File(outputPath).writeAsBytes(imageBytes.buffer.asUint8List());
+      page.dispose();
+    }
+
+    await pdfDoc.dispose();
+  }
+  
+
+  // ─── ROTATE PAGES ─────────────────────────────────────────────────────────
   static Future<void> rotatePages(WidgetRef ref) async {
     final document = ref.read(currentDocumentProvider);
     if (document == null) return;
@@ -149,15 +195,39 @@ class PdfService {
     final doc = sfpdf.PdfDocument(inputBytes: bytes);
 
     for (int i = 0; i < doc.pages.count; i++) {
-      doc.pages[i].rotation =
-          doc.pages[i].rotation == sfpdf.PdfPageRotateAngle.rotateAngle270
-              ? sfpdf.PdfPageRotateAngle.rotateAngle0
-              : sfpdf.PdfPageRotateAngle.values[
-                  doc.pages[i].rotation.index + 1];
+      // ─── ROTATE EACH PAGE 90 DEGREES CLOCKWISE ──────────────────
+      switch (doc.pages[i].rotation) {
+        case sfpdf.PdfPageRotateAngle.rotateAngle0:
+          doc.pages[i].rotation = sfpdf.PdfPageRotateAngle.rotateAngle90;
+          break;
+        case sfpdf.PdfPageRotateAngle.rotateAngle90:
+          doc.pages[i].rotation = sfpdf.PdfPageRotateAngle.rotateAngle180;
+          break;
+        case sfpdf.PdfPageRotateAngle.rotateAngle180:
+          doc.pages[i].rotation = sfpdf.PdfPageRotateAngle.rotateAngle270;
+          break;
+        case sfpdf.PdfPageRotateAngle.rotateAngle270:
+          doc.pages[i].rotation = sfpdf.PdfPageRotateAngle.rotateAngle0;
+          break;
+      }
     }
 
-    await File(document.path).writeAsBytes(await doc.save());
+    // ─── SAVE TO A NEW FILE THEN RELOAD ─────────────────────────────
+    final savePath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save rotated PDF',
+      fileName: '${p.basenameWithoutExtension(document.name)}_rotated.pdf',
+    );
+
+    if (savePath == null) {
+      doc.dispose();
+      return;
+    }
+
+    final savedBytes = await doc.save();
+    await File(savePath).writeAsBytes(savedBytes);
     doc.dispose();
-    await openFilePath(ref, document.path);
+
+    // ─── OPEN THE ROTATED FILE ───────────────────────────────────────
+    await openFilePath(ref, savePath);
   }
 }
