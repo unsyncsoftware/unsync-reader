@@ -1,0 +1,37 @@
+name: unsync_reader
+description: Unsync Reader - Private local PDF tool by UnSync Software
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # PDF Rendering - PDFium powered, sharp vector rendering
+  pdfrx: ^1.0.0
+
+  # PDF Processing - merge, split, annotate, flatten
+  syncfusion_flutter_pdf: ^27.0.0
+  syncfusion_flutter_pdfviewer: ^27.0.0
+
+  # File picking and saving
+  file_picker: ^8.0.0
+  path_provider: ^2.1.0
+  path: ^1.9.0
+
+  # UI
+  flutter_riverpod: ^2.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/fonts/
