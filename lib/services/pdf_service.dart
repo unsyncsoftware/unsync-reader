@@ -8,6 +8,7 @@ import '../providers/pdf_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:pdfrx/pdfrx.dart';
+import 'storage_service.dart';
 
 class PdfService {
 
@@ -43,8 +44,9 @@ class PdfService {
     final recents = List<PdfDoc>.from(ref.read(recentDocumentsProvider));
     recents.removeWhere((d) => d.path == path);
     recents.insert(0, doc);
-    ref.read(recentDocumentsProvider.notifier).state =
-        recents.take(10).toList();
+    final trimmed = recents.take(10).toList();
+    ref.read(recentDocumentsProvider.notifier).state = trimmed;
+    await StorageService.saveRecentFiles(trimmed.map((d) => d.path).toList());
   }
 
   static Future<void> mergePdfs(WidgetRef ref) async {

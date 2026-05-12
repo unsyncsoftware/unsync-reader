@@ -25,13 +25,22 @@ dependencies:
 
   # UI
   flutter_riverpod: ^2.5.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/fonts/
+
+flutter_launcher_icons:
+  windows:
+    generate: true
+    image_path: "assets/unsync_reader_icon.png"
+    icon_size: 256
+
