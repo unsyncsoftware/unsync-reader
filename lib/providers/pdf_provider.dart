@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfrx/pdfrx.dart';
 import '../models/pdf_document.dart';
+import '../models/annotation.dart';
 
 
 final currentDocumentProvider = StateProvider<PdfDoc?>((ref) => null);
@@ -19,3 +20,7 @@ final pageInvertProvider = StateProvider<bool>((ref) => false);
 final pdfViewerControllerProvider = Provider<PdfViewerController>((ref) {
   return PdfViewerController();
 });
+
+// ─── ANNOTATIONS PROVIDER ─────────────────────────────────────────────────
+final annotationsProvider =
+    StateProvider<List<Annotation>>((ref) => []);

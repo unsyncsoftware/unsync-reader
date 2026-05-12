@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/pdf_provider.dart';
+import '../services/pdf_service.dart';
 
 class Toolbar extends ConsumerWidget {
   const Toolbar({super.key});
@@ -138,9 +139,9 @@ class Toolbar extends ConsumerWidget {
               foregroundColor: Theme.of(context).colorScheme.primary,
               textStyle: const TextStyle(fontSize: 13),
             ),
-            onPressed: () {
-              // TODO: implement save with flatten
-            },
+
+            onPressed: () => PdfService.saveWithAnnotations(ref, context),
+
           ),
         ],
       ),

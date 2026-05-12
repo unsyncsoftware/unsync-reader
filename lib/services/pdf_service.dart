@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:pdfrx/pdfrx.dart';
 import 'storage_service.dart';
+import '../models/annotation.dart';
 
 class PdfService {
 
@@ -232,4 +233,140 @@ class PdfService {
     // ─── OPEN THE ROTATED FILE ───────────────────────────────────────
     await openFilePath(ref, savePath);
   }
+
+  // ─── SAVE WITH ANNOTATIONS FLATTENED INTO PDF ─────────────────────────────
+  static Future<void> saveWithAnnotations(
+      WidgetRef ref, BuildContext context) async {
+    final document = ref.read(currentDocumentProvider);
+    final annotations = ref.read(annotationsProvider);
+
+    if (document == null) return;
+
+    // ─── PICK SAVE LOCATION ─────────────────────────────────────────────
+    final savePath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save PDF',
+      fileName: document.name,
+    );
+    if (savePath == null) return;
+
+    final bytes = File(document.path).readAsBytesSync();
+    final doc = sfpdf.PdfDocument(inputBytes: bytes);
+
+    for (final ann in annotations) {
+      // ─── PAGE INDEX IS 0-BASED IN SYNCFUSION ──────────────────────────
+      final pageIndex = ann.pageNumber - 1;
+      if (pageIndex < 0 || pageIndex >= doc.pages.count) continue;
+
+      final page = doc.pages[pageIndex];
+      final pageHeight = page.size.height;
+
+      // ─── CONVERT FLUTTER COORDS TO PDF COORDS ─────────────────────────
+      // PDF coordinates start from bottom-left, Flutter from top-left
+      final pdfRect = Rect.fromLTWH(
+        ann.bounds.left,
+        pageHeight - ann.bounds.top - ann.bounds.height,
+        ann.bounds.width,
+        ann.bounds.height,
+      );
+
+      switch (ann.type) {
+        // ─── FLATTEN HIGHLIGHT ───────────────────────────────────────────
+        case AnnotationType.highlight:
+          final highlight = sfpdf.PdfRectangleAnnotation(
+            pdfRect,
+            'Highlight',
+            color: sfpdf.PdfColor(
+              ann.color.red,
+              ann.color.green,
+              ann.color.blue,
+              76, // 30% opacity
+            ),
+            innerColor: sfpdf.PdfColor(
+              ann.color.red,
+              ann.color.green,
+              ann.color.blue,
+              76,
+            ),
+          );
+          page.annotations.add(highlight);
+          page.annotations.flattenAllAnnotations();
+          break;
+
+        // ─── FLATTEN RECTANGLE ───────────────────────────────────────────
+        case AnnotationType.rectangle:
+          final rect = sfpdf.PdfRectangleAnnotation(
+            pdfRect,
+            'Rectangle',
+            color: sfpdf.PdfColor(
+              ann.color.red,
+              ann.color.green,
+              ann.color.blue,
+            ),
+          );
+          page.annotations.add(rect);
+          page.annotations.flattenAllAnnotations();
+          break;
+
+        // ─── FLATTEN TEXT OVERLAY ────────────────────────────────────────
+        case AnnotationType.text:
+          if (ann.text != null) {
+            page.graphics.drawString(
+              ann.text!,
+              sfpdf.PdfStandardFont(
+                  sfpdf.PdfFontFamily.helvetica, 14),
+              brush: sfpdf.PdfSolidBrush(
+                sfpdf.PdfColor(
+                  ann.color.red,
+                  ann.color.green,
+                  ann.color.blue,
+                ),
+              ),
+              bounds: pdfRect,
+            );
+          }
+          break;
+
+        // ─── FLATTEN STICKY NOTE ─────────────────────────────────────────
+        case AnnotationType.stickyNote:
+          page.graphics.drawRectangle(
+            brush: sfpdf.PdfSolidBrush(
+              sfpdf.PdfColor(
+                ann.color.red,
+                ann.color.green,
+                ann.color.blue,
+                150,
+              ),
+            ),
+            bounds: Rect.fromLTWH(
+              pdfRect.left,
+              pdfRect.top,
+              20,
+              20,
+            ),
+          );
+          break;
+      }
+    }
+
+    // ─── SAVE THE FLATTENED PDF ──────────────────────────────────────────
+    final savedBytes = await doc.save();
+    await File(savePath).writeAsBytes(savedBytes);
+    doc.dispose();
+
+    // ─── CLEAR ANNOTATIONS AND RELOAD ───────────────────────────────────
+    ref.read(annotationsProvider.notifier).state = [];
+    await openFilePath(ref, savePath);
+
+    // ─── SHOW SUCCESS SNACKBAR ───────────────────────────────────────────
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('PDF saved with annotations'),
+          backgroundColor: Color(0xFF6C63FF),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
 }
