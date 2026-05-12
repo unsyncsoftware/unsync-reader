@@ -13,7 +13,49 @@ import '../models/annotation.dart';
 
 class PdfService {
 
-  static Future<void> openFile(WidgetRef ref) async {
+  static Future<void> openFile(WidgetRef ref, BuildContext context) async {
+    // ─── CHECK FOR UNSAVED ANNOTATIONS ─────────────────────────────
+    final annotations = ref.read(annotationsProvider);
+    if (annotations.isNotEmpty) {
+      final shouldDiscard = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF16213E),
+          title: const Text(
+            'Unsaved Annotations',
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          content: const Text(
+            'You have unsaved annotations on the current document. Opening a new file will discard them.',
+            style: TextStyle(color: Colors.grey, fontSize: 13),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel',
+                  style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Save First',
+                  style: TextStyle(color: Color(0xFF6C63FF))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Discard & Open',
+                  style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldDiscard != true) return;
+
+      // ─── CLEAR ANNOTATIONS IF USER CHOSE DISCARD ───────────────
+      ref.read(annotationsProvider.notifier).state = [];
+    }
+
+    // ─── PICK AND OPEN NEW FILE ─────────────────────────────────────
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],

@@ -72,7 +72,7 @@ class DropZone extends ConsumerWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            onPressed: () => PdfService.openFile(ref),
+            onPressed: () => PdfService.openFile(ref, context),
           ),
 
           const SizedBox(height: 16),

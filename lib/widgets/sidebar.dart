@@ -30,7 +30,7 @@ class Sidebar extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: () => PdfService.openFile(ref),
+                onPressed: () => PdfService.openFile(ref, context),
               ),
             ),
           ),
