@@ -8,7 +8,6 @@ class Toolbar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeTool = ref.watch(activeToolProvider);
     final currentPage = ref.watch(currentPageProvider);
     final document = ref.watch(currentDocumentProvider);
 
@@ -18,38 +17,30 @@ class Toolbar extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         children: [
-          // ─── ANNOTATION TOOLS ─────────────────────────────────────────
+          // ─── ANNOTATION TOOLS (Phase 2) ───────────────────────────────
           _ToolButton(
             icon: Icons.highlight_outlined,
-            tooltip: 'Highlight',
-            active: activeTool == Tool.highlight,
-            onTap: () => ref.read(activeToolProvider.notifier).state =
-                activeTool == Tool.highlight ? Tool.none : Tool.highlight,
+            tooltip: 'Highlight — Coming Soon',
+            active: false,
+            onTap: () {},
           ),
           _ToolButton(
             icon: Icons.sticky_note_2_outlined,
-            tooltip: 'Sticky Note',
-            active: activeTool == Tool.stickyNote,
-            onTap: () => ref.read(activeToolProvider.notifier).state =
-                activeTool == Tool.stickyNote
-                    ? Tool.none
-                    : Tool.stickyNote,
+            tooltip: 'Sticky Note — Coming Soon',
+            active: false,
+            onTap: () {},
           ),
           _ToolButton(
             icon: Icons.title_outlined,
-            tooltip: 'Add Text',
-            active: activeTool == Tool.typewriter,
-            onTap: () => ref.read(activeToolProvider.notifier).state =
-                activeTool == Tool.typewriter
-                    ? Tool.none
-                    : Tool.typewriter,
+            tooltip: 'Add Text — Coming Soon',
+            active: false,
+            onTap: () {},
           ),
           _ToolButton(
             icon: Icons.crop_square_outlined,
-            tooltip: 'Draw Shape',
-            active: activeTool == Tool.shape,
-            onTap: () => ref.read(activeToolProvider.notifier).state =
-                activeTool == Tool.shape ? Tool.none : Tool.shape,
+            tooltip: 'Draw Shape — Coming Soon',
+            active: false,
+            onTap: () {},
           ),
 
           const VerticalDivider(width: 16, indent: 8, endIndent: 8),
@@ -80,7 +71,7 @@ class Toolbar extends ConsumerWidget {
 
           const Spacer(),
 
-          // ─── ZOOM OUT BUTTON ──────────────────────────────────────────
+          // ─── ZOOM OUT ─────────────────────────────────────────────────
           IconButton(
             icon: const Icon(Icons.zoom_out),
             iconSize: 18,
@@ -96,24 +87,24 @@ class Toolbar extends ConsumerWidget {
             },
           ),
 
-          // ─── ZOOM PERCENTAGE DISPLAY ──────────────────────────────────
+          // ─── ZOOM PERCENTAGE ──────────────────────────────────────────
           Consumer(builder: (context, ref, _) {
             final controller = ref.watch(pdfViewerControllerProvider);
             return ListenableBuilder(
               listenable: controller,
               builder: (context, _) {
-                final zoom = controller.isReady
-                    ? controller.currentZoom
-                    : 1.0;
+                final zoom =
+                    controller.isReady ? controller.currentZoom : 1.0;
                 return Text(
                   '${(zoom * 100).toStringAsFixed(0)}%',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style:
+                      const TextStyle(fontSize: 12, color: Colors.grey),
                 );
               },
             );
           }),
 
-          // ─── ZOOM IN BUTTON ───────────────────────────────────────────
+          // ─── ZOOM IN ──────────────────────────────────────────────────
           IconButton(
             icon: const Icon(Icons.zoom_in),
             iconSize: 18,
@@ -131,7 +122,7 @@ class Toolbar extends ConsumerWidget {
 
           const VerticalDivider(width: 16, indent: 8, endIndent: 8),
 
-          // ─── SAVE BUTTON ──────────────────────────────────────────────
+          // ─── SAVE ─────────────────────────────────────────────────────
           TextButton.icon(
             icon: const Icon(Icons.save_outlined, size: 16),
             label: const Text('Save'),
@@ -139,9 +130,7 @@ class Toolbar extends ConsumerWidget {
               foregroundColor: Theme.of(context).colorScheme.primary,
               textStyle: const TextStyle(fontSize: 13),
             ),
-
             onPressed: () => PdfService.saveWithAnnotations(ref, context),
-
           ),
         ],
       ),
@@ -183,7 +172,7 @@ class _ToolButton extends StatelessWidget {
             size: 18,
             color: active
                 ? Theme.of(context).colorScheme.primary
-                : Colors.grey,
+                : Colors.grey.withOpacity(0.4),
           ),
         ),
       ),
